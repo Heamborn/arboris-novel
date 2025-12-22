@@ -6,6 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
+你也可以尝试 [novel-kit](https://github.com/t59688/novel-kit)
 
 
 你盯着屏幕上闪烁的光标，脑子里有个模糊的想法：一个有意思的故事。但当你试图把它写下来时，却发现自己卡在了「主角叫什么名字」「故事发生在哪里」「第三章该写什么」这些问题上。
