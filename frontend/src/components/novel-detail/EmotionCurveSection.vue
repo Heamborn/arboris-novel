@@ -39,6 +39,7 @@
           >
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
+          刷新
         </button>
       </div>
     </div>
@@ -154,6 +155,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import Chart from 'chart.js/auto'
 
 interface EmotionPoint {
   chapter_number: number
@@ -185,6 +187,15 @@ const totalChapters = ref(0)
 const averageIntensity = ref(0)
 const emotionDistribution = ref<Record<string, number>>({})
 let chartInstance: any = null
+
+const EMOTION_KEY_MAP: { [key: string]: string } = {
+  'joy': '喜悦',
+  'sadness': '悲伤',
+  'anger': '愤怒',
+  'fear': '恐惧',
+  'surprise': '惊讶',
+  'calm': '平静'
+};
 
 const emotionTypes = [
   { key: 'joy', label: '喜悦', color: '#34A853' },
@@ -254,184 +265,318 @@ const fetchEmotionData = async (useAI = false) => {
       let errorMessage = '获取情感数据失败'
       try {
         const errorData = await response.json()
-        // 处琅22错误（参数校验失败）
+        // 处理422错误（参数校验失败）
         if (response.status === 422 && errorData.detail) {
           if (Array.isArray(errorData.detail)) {
-            // FastAPI验证错误格式
-            const errors = errorData.detail.map((err: any) => 
-              `${err.loc?.join('.')} - ${err.msg}`
-            ).join('; ')
-            errorMessage = `参数校验失败: ${errors}`
+            errorMessage = errorData.detail.map((d: any) => d.msg).join('; ')
           } else if (typeof errorData.detail === 'string') {
             errorMessage = errorData.detail
           }
-        } else {
-          errorMessage = errorData.detail || errorData.message || JSON.stringify(errorData)
+        } else if (errorData.detail) {
+          errorMessage = errorData.detail
         }
       } catch (e) {
-        errorMessage = `HTTP ${response.status}: ${response.statusText}`
+        console.error('Error parsing error response:', e)
       }
       throw new Error(errorMessage)
     }
     
     const data: EmotionCurveResponse = await response.json()
-    console.log('[fetchEmotionData] API返回数据:', data)
-    emotionPoints.value = data.emotion_points || []
+    emotionPoints.value = data.emotion_points
     totalChapters.value = data.total_chapters
-    averageIntensity.value = data.average_intensity
-    emotionDistribution.value = data.emotion_distribution || {}
-    console.log('[fetchEmotionData] emotionPoints数量:', emotionPoints.value.length)
-    
-    await nextTick()
-    console.log('[fetchEmotionData] nextTick后，准备初始化图表')
-    initChart()
-  } catch (e: any) {
-    console.error('情感曲线加载错误:', e)
-    if (e instanceof Error) {
-      error.value = e.message
-    } else if (typeof e === 'string') {
-      error.value = e
-    } else {
-      error.value = '加载失败，请稍后重试'
-    }
+    averageIntensity.value = parseFloat(data.average_intensity.toFixed(2))
+    emotionDistribution.value = data.emotion_distribution
+
+    // 确保在数据加载后更新图表
+    nextTick(() => {
+      if (chartInstance) {
+        updateChart();
+      } else {
+        initChart();
+      }
+    });
+
+  } catch (err: any) {
+    error.value = err.message || '加载情感数据时发生错误'
+    console.error('Failed to fetch emotion data:', err)
   } finally {
     isLoading.value = false
   }
 }
 
-const refreshData = () => {
-  fetchEmotionData(false)
+const updateChart = () => {
+  if (!chartInstance) {
+    initChart();
+    return;
+  }
+
+  const labels = emotionPoints.value.map(p => `第${p.chapter_number}章`);
+  const datasets = emotionTypes
+    .filter(et => selectedEmotions.value.includes(et.key))
+    .map(emotionType => {
+      const data = emotionPoints.value.map(p => {
+        const key = Object.keys(EMOTION_KEY_MAP).find(k => EMOTION_KEY_MAP[k] === p.emotion_type);
+        return key === emotionType.key ? p.intensity : null;
+      });
+      return {
+        label: emotionType.label,
+        data: data,
+        borderColor: emotionType.color,
+        backgroundColor: emotionType.color + '33',
+        tension: 0.4,
+        fill: false,
+        spanGaps: true,
+      };
+    });
+
+  chartInstance.data.labels = labels;
+  chartInstance.data.datasets = datasets;
+  chartInstance.update();
 }
 
-const useAIAnalysis = () => {
-  fetchEmotionData(true)
-}
-
-const initChart = async () => {
-  console.log('[initChart] 开始初始化图表')
-  console.log('[initChart] chartCanvas.value:', chartCanvas.value)
-  console.log('[initChart] emotionPoints.value.length:', emotionPoints.value.length)
-  
+const initChart = () => {
   if (!chartCanvas.value) {
-    console.error('[initChart] canvas元素不存在')
-    return
+    console.warn('Chart canvas not found.');
+    return;
   }
-  
-  if (emotionPoints.value.length === 0) {
-    console.warn('[initChart] 没有情感数据点')
-    return
-  }
-  
-  try {
-    // Dynamically import Chart.js
-    console.log('[initChart] 开始动态导入Chart.js')
-    const { Chart, registerables } = await import('chart.js')
-    console.log('[initChart] Chart.js导入成功')
-    Chart.register(...registerables)
-    console.log('[initChart] Chart.js注册完成')
-  
+
   if (chartInstance) {
-    chartInstance.destroy()
+    chartInstance.destroy();
   }
-  
-  const ctx = chartCanvas.value.getContext('2d')
-  if (!ctx) return
-  
-  const labels = emotionPoints.value.map(p => `第${p.chapter_number}章`)
-  const intensityData = emotionPoints.value.map(p => p.intensity)
-  const backgroundColors = emotionPoints.value.map(p => getEmotionColor(p.emotion_type) + '80')
-  const borderColors = emotionPoints.value.map(p => getEmotionColor(p.emotion_type))
-  
+
+  const ctx = chartCanvas.value.getContext('2d');
+  if (!ctx) {
+    console.error('Failed to get 2D context for canvas.');
+    return;
+  }
+
+  const labels = emotionPoints.value.map(p => `第${p.chapter_number}章`);
+  const datasets = emotionTypes
+    .filter(et => selectedEmotions.value.includes(et.key))
+    .map(emotionType => {
+      const data = emotionPoints.value.map(p => {
+        const key = Object.keys(EMOTION_KEY_MAP).find(k => EMOTION_KEY_MAP[k] === p.emotion_type);
+        return key === emotionType.key ? p.intensity : null;
+      });
+      return {
+        label: emotionType.label,
+        data: data,
+        borderColor: emotionType.color,
+        backgroundColor: emotionType.color + '33',
+        tension: 0.4,
+        fill: false,
+        spanGaps: true,
+      };
+    });
+
   chartInstance = new Chart(ctx, {
     type: 'line',
     data: {
-      labels,
-      datasets: [{
-        label: '情感强度',
-        data: intensityData,
-        borderColor: '#4285F4',
-        backgroundColor: 'rgba(66, 133, 244, 0.1)',
-        tension: 0.4,
-        fill: true,
-        pointRadius: 6,
-        pointHoverRadius: 8,
-        pointBackgroundColor: backgroundColors,
-        pointBorderColor: borderColors,
-        pointBorderWidth: 2
-      }]
+      labels: labels,
+      datasets: datasets,
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: {
-        intersect: false,
-        mode: 'index'
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 10,
+          title: {
+            display: true,
+            text: '情感强度'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: '章节'
+          }
+        }
       },
       plugins: {
-        legend: {
-          display: false
-        },
         tooltip: {
-          backgroundColor: 'rgba(32, 33, 36, 0.9)',
-          titleFont: { family: 'Roboto', size: 14 },
-          bodyFont: { family: 'Roboto', size: 12 },
-          padding: 12,
-          cornerRadius: 8,
           callbacks: {
-            label: (context: any) => {
-              const point = emotionPoints.value[context.dataIndex]
-              return [
-                `情感: ${point.emotion_type}`,
-                `强度: ${point.intensity}/10`,
-                point.narrative_phase ? `阶段: ${point.narrative_phase}` : ''
-              ].filter(Boolean)
+            title: function(context) {
+              return context[0].label;
+            },
+            label: function(context) {
+              const emotionType = emotionTypes.find(et => et.label === context.dataset.label);
+              const point = emotionPoints.value[context.dataIndex];
+              if (point && emotionType && Object.keys(EMOTION_KEY_MAP).find(k => EMOTION_KEY_MAP[k] === point.emotion_type) === emotionType.key) {
+                return `${point.emotion_type}: ${point.intensity}/10`;
+              }
+              return '';
             }
           }
-        }
-      },
-      scales: {
-        x: {
-          grid: {
-            color: 'rgba(218, 220, 224, 0.5)'
-          },
-          ticks: {
-            font: { family: 'Roboto', size: 12 },
-            color: '#5F6368'
-          }
         },
-        y: {
-          min: 0,
-          max: 10,
-          grid: {
-            color: 'rgba(218, 220, 224, 0.5)'
-          },
-          ticks: {
-            font: { family: 'Roboto', size: 12 },
-            color: '#5F6368',
-            stepSize: 2
-          }
+        legend: {
+          display: true,
+          position: 'top',
         }
       }
-    }
-  })
-  
-  console.log('[initChart] 图表创建成功')
-  } catch (error) {
-    console.error('[initChart] 图表初始化失败:', error)
-  }
-}
+    },
+  });
+};
 
-const updateChart = () => {
-  if (chartInstance && emotionPoints.value.length > 0) {
-    initChart()
-  }
-}
+const refreshData = () => {
+  fetchEmotionData();
+};
 
 onMounted(() => {
-  fetchEmotionData()
-})
+  fetchEmotionData();
+});
+
+watch(emotionPoints, (newPoints) => {
+  if (newPoints && newPoints.length > 0) {
+    nextTick(() => {
+      if (chartInstance) {
+        updateChart();
+      } else {
+        initChart();
+      }
+    });
+  } else if (chartInstance) {
+    chartInstance.destroy();
+    chartInstance = null;
+  }
+}, { deep: true });
 
 watch(selectedEmotions, () => {
-  updateChart()
-}, { deep: true })
+  updateChart();
+}, { deep: true });
 </script>
+
+<style scoped>
+.emotion-curve-section {
+  padding: 20px;
+  background-color: var(--md-surface);
+  border-radius: var(--md-radius-lg);
+  color: var(--md-on-surface);
+}
+
+.md-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.md-btn-tonal {
+  background-color: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+}
+
+.md-btn-tonal:hover {
+  background-color: var(--md-secondary-container-hover);
+}
+
+.md-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: var(--md-on-surface-variant);
+}
+
+.md-icon-btn:hover {
+  background-color: var(--md-on-surface-variant-hover);
+}
+
+.md-spinner {
+  width: 32px;
+  height: 32px;
+  border: 4px solid var(--md-primary);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.md-card {
+  background-color: var(--md-surface-container-low);
+  border-radius: var(--md-radius-md);
+  padding: 16px;
+}
+
+.md-card-outlined {
+  border: 1px solid var(--md-outline);
+  background-color: var(--md-surface);
+}
+
+.md-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background-color: var(--md-surface-container-low);
+  color: var(--md-on-surface);
+  border: 1px solid var(--md-outline);
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.md-chip.selected {
+  background-color: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  border-color: var(--md-primary);
+}
+
+.md-chip-filter .w-2.h-2 {
+  margin-right: 8px;
+}
+
+.md-title-medium {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.md-body-small {
+  font-size: 0.75rem;
+}
+
+.md-body-medium {
+  font-size: 0.875rem;
+}
+
+.md-body-large {
+  font-size: 1rem;
+}
+
+.md-label-medium {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.md-headline-small {
+  font-size: 1.5rem;
+  font-weight: 400;
+}
+
+.md-title-small {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.md-label-large {
+  font-size: 1rem;
+  font-weight: 500;
+}
+</style>

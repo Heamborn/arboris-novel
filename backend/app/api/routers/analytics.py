@@ -455,7 +455,12 @@ async def analyze_emotion_with_ai(
 只返回JSON，不要其他内容。"""
 
     try:
-        response = await llm_service.generate(prompt, temperature=0.3)
+        response = await llm_service.get_llm_response(
+            system_prompt="你是一个专业的小说情感分析师。",
+            conversation_history=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            user_id=current_user.id
+        )
         # 解析JSON
         import json
         from ...utils.json_utils import unwrap_markdown_json
