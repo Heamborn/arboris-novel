@@ -17,14 +17,14 @@ import logging
 import os
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.config import settings
 from ...core.dependencies import get_current_user
 from ...db.session import get_session
-from ...models.novel import Chapter, ChapterOutline
+from ...models.novel import Chapter
 from ...schemas.novel import (
     DeleteChapterRequest,
     EditChapterRequest,
@@ -44,6 +44,7 @@ from ...services.prompt_service import PromptService
 from ...services.vector_store_service import VectorStoreService
 from ...services.writer_context_builder import WriterContextBuilder
 from ...services.chapter_guardrails import ChapterGuardrails
+from ...services.ai_review_service import AIReviewService
 from ...utils.json_utils import remove_think_tags, unwrap_markdown_json
 from ...repositories.system_config_repository import SystemConfigRepository
 
@@ -512,6 +513,35 @@ async def generate_chapter(
         else:
             contents.append(str(variant))
             metadata.append({"raw": variant})
+
+    # ========== 8. AI Review: 自动评审多版本 ==========
+    ai_review_result = None
+    if len(contents) > 1:
+        try:
+            ai_review_service = AIReviewService(llm_service, prompt_service)
+            ai_review_result = await ai_review_service.review_versions(
+                versions=contents,
+                chapter_mission=chapter_mission,
+                user_id=current_user.id,
+            )
+            if ai_review_result:
+                logger.info(
+                    "项目 %s 第 %s 章 AI 评审完成: 推荐版本=%s",
+                    project_id,
+                    request.chapter_number,
+                    ai_review_result.best_version_index,
+                )
+                # 将评审结果附加到 metadata
+                for i, m in enumerate(metadata):
+                    m["ai_review"] = {
+                        "is_best": i == ai_review_result.best_version_index,
+                        "scores": ai_review_result.scores,
+                        "evaluation": ai_review_result.overall_evaluation if i == ai_review_result.best_version_index else None,
+                        "flaws": ai_review_result.critical_flaws if i == ai_review_result.best_version_index else None,
+                        "suggestions": ai_review_result.refinement_suggestions if i == ai_review_result.best_version_index else None,
+                    }
+        except Exception as exc:
+            logger.warning("AI 评审失败，跳过: %s", exc)
 
     await novel_service.replace_chapter_versions(chapter, contents, metadata)
     logger.info(
