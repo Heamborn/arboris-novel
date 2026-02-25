@@ -1,5 +1,7 @@
 # Arboris-Novel | 面向创作者的写作辅助工具
 
+**[English](README-en.md)** | 中文
+
 ![GitHub stars](https://img.shields.io/github/stars/t59688/arboris-novel?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/t59688/arboris-novel?style=social)
 ![GitHub issues](https://img.shields.io/github/issues/t59688/arboris-novel)
