@@ -1,29 +1,28 @@
-# Arboris-Novel  | 给写小说的人，一个有意思的写作空间
+# Arboris-Novel | 面向创作者的写作辅助工具
 
 ![GitHub stars](https://img.shields.io/github/stars/t59688/arboris-novel?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/t59688/arboris-novel?style=social)
 ![GitHub issues](https://img.shields.io/github/issues/t59688/arboris-novel)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+如果你想使用命令行+编辑器的方式，可搭配使用 [novel-kit](https://github.com/t59688/novel-kit)。
 
-你也可以尝试 [novel-kit](https://github.com/t59688/novel-kit)
+写作时容易卡在「主角叫什么」「故事发生在哪」「下一章写什么」这类问题上。**Arboris** 在需要时帮你理清思路、记录设定、给出可选方向，让想法落成故事。
 
+**在线体验：** [https://arboris.aozhiai.com](https://arboris.aozhiai.com)
 
-你盯着屏幕上闪烁的光标，脑子里有个模糊的想法：一个有意思的故事。但当你试图把它写下来时，却发现自己卡在了「主角叫什么名字」「故事发生在哪里」「第三章该写什么」这些问题上。
-
-**Arboris** 就是在这种时候出现的——它不会替你写作（那样多没意思），但它会在你需要的时候，帮你理清思路、记住细节、提供几个「要不试试这个方向」的建议。
-
-**在线体验：** [https://arboris.aozhiai.com](https://arboris.aozhiai.com) 
-
-
-**有问题想聊？加群(微信满了...)：**  
 <p align="center">
-  <img width="294" alt="交流群二维码" src="https://github.com/user-attachments/assets/6d4fe420-f8ae-4fe4-883d-235eb576c83b" />
+  <table align="center">
+    <tr>
+      <td align="center"><strong>交流群</strong><br/><img width="220" alt="交流群二维码" src="https://github.com/user-attachments/assets/6d4fe420-f8ae-4fe4-883d-235eb576c83b" /></td>
+      <td align="center"><strong>作者公众号</strong><br/><img width="220" alt="作者公众号" src="https://picui.ogmua.cn/s1/2026/02/24/699d109e4ced2.webp" /></td>
+    </tr>
+  </table>
 </p>
 
 ---
 
-## 截图看看长什么样
+## 界面预览
 
 <p align="center">
   <img width="1471" alt="主界面" src="https://github.com/user-attachments/assets/a52d0214-bc1b-4792-8a2b-267b09e47379" />
@@ -40,104 +39,96 @@
 
 ---
 
-## 它能帮你干什么？
+## 功能概览
 
-### 📖 管住那些跑偏的设定
-写到第五十章突然想不起来男二号的眼睛是什么颜色？世界观里的魔法体系到底有几个等级？  
-Arboris 帮你把所有角色、地点、派系的设定都记下来，随时翻阅，再也不会前后矛盾。
+### 设定管理
+角色、地点、派系等设定集中记录，随时查阅，避免写到后期前后矛盾（如角色外貌、世界观规则等）。
 
-### 🧵 把乱糟糟的灵感捋成故事线
-脑子里有十几个场景片段，但不知道怎么串起来？  
-和 AI 聊聊你的想法，它会帮你梳理出一条主线，从开头到结局的大纲自然就出来了。
+### 大纲与故事线
+零散的场景和灵感可交给 AI 梳理，生成从开头到结局的主线大纲。
 
-### ✍️ 有个不会累的写作搭档
-今天状态不好，但又不想断更？让 AI 先写个草稿，你再根据自己的风格改改。  
-或者反过来——你写了开头，让它接着往下试试，没准能给你意想不到的灵感。
+### 写作辅助
+状态不佳时可让 AI 先出草稿再按自己的风格修改；也可自己写开头，让 AI 续写以获取灵感。
 
-### 🔄 多版本对比，找到最对味的那一版
-AI 生成的内容不一定第一次就完美，但你可以让它多试几版，挑出最喜欢的部分，慢慢"训练"它懂你的笔触。
+### 多版本对比
+支持一次生成多版内容，挑选最符合风格的部分，逐步让模型更贴合你的笔触。
 
 ---
 
-## 为什么要做这个？
+## 项目初衷
 
-因为我觉得我们需要的不是一个"自动生成器"，而是一个**能记住你的世界、理解你的角色、陪你一起推进故事的伙伴**。
-
-所以我们做了 Arboris，并且决定**开源**——因为好的工具应该属于所有创作者。
+目标是做一个**能记住你的世界、理解角色、随故事推进的写作伙伴**，而不是单纯的自动生成器。因此做了 Arboris 并选择开源，方便更多创作者使用。
 
 ---
 
-## 快速开始（真的很快）
+## 快速开始
 
-### 方式一：直接用 Docker 跑起来
+### 方式一：Docker 部署
 
 ```bash
 # 1. 复制配置文件
 cp .env.example .env
 
-# 2. 改几个必填项（用你喜欢的编辑器打开 .env）
-#    - SECRET_KEY: 随便敲点字符，越长越安全
-#    - OPENAI_API_KEY: 你的大模型 API Key
-#    - ADMIN_DEFAULT_PASSWORD: 管理员密码，别用默认的
+# 2. 编辑 .env 中的必填项：
+#    - SECRET_KEY: 随机字符串，用于 JWT 等
+#    - OPENAI_API_KEY: 大模型 API Key
+#    - ADMIN_DEFAULT_PASSWORD: 管理员密码（勿用默认值）
 
-# 3. 启动（默认用 SQLite，不需要装数据库）
+# 3. 启动（默认 SQLite，无需单独安装数据库）
 docker compose up -d
 
-# 搞定！浏览器打开 http://localhost:<端口> 就能用了
+# 启动后在浏览器访问 http://localhost:<端口>
 ```
 
-### 方式二：我想用 MySQL
+### 方式二：使用 MySQL（Compose 内 MySQL）
 
 ```bash
-# 在 .env 里改一下 DB_PROVIDER=mysql
-# 然后用这个命令启动（会自动带上 MySQL 容器）
+# .env 中设置 DB_PROVIDER=mysql，然后执行：
 DB_PROVIDER=mysql docker compose --profile mysql up -d
 ```
 
-### 方式三：我有自己的 MySQL 服务器
+### 方式三：使用自有 MySQL
 
 ```bash
-# 在 .env 里填好你的数据库地址、用户名、密码
-# 然后正常启动
+# 在 .env 中配置数据库地址、用户名、密码后执行：
 DB_PROVIDER=mysql docker compose up -d
 ```
 
 ---
 
-## 环境变量速查表
+## 环境变量说明
 
-这些是你可能需要改的配置（完整列表在 `.env.example` 里）：
+常用配置如下（完整项见 `.env.example`）：
 
 | 配置项 | 必填吗 | 说明 |
 |--------|--------|------|
-| `SECRET_KEY` | ✅ | JWT 加密密钥，自己随机生成一串，别告诉别人 |
+| `SECRET_KEY` | ✅ | JWT 加密密钥，需自行随机生成并妥善保管 |
 | `OPENAI_API_KEY` | ✅ | 你的 LLM API Key（OpenAI 或兼容的） |
 | `OPENAI_API_BASE_URL` | ❌ | API 地址，默认是 OpenAI 官方的 |
 | `OPENAI_MODEL_NAME` | ❌ | 模型名称，默认 `gpt-3.5-turbo` |
-| `ADMIN_DEFAULT_PASSWORD` | ❌ | 管理员初始密码，**部署后记得改** |
-| `ALLOW_USER_REGISTRATION` | ❌ | 要不要开放注册？默认不开（`false`） |
-| `SMTP_SERVER` / `SMTP_USERNAME` | 开注册就得填 | 邮件服务配置，用来发验证码 |
+| `ADMIN_DEFAULT_PASSWORD` | ❌ | 管理员初始密码，部署后务必修改 |
+| `ALLOW_USER_REGISTRATION` | ❌ | 是否开放注册，默认 `false` |
+| `SMTP_SERVER` / `SMTP_USERNAME` | 开放注册时必填 | 邮件服务，用于发送验证码 |
 
-> 💡 **数据存哪？**  
-> 默认用 SQLite，数据存在 Docker 卷里。想映射到本地？在 `.env` 里设置 `SQLITE_STORAGE_SOURCE=./storage` 就行。
+> **数据存储：** 默认 SQLite，数据在 Docker 卷中。需映射到本地时，在 `.env` 中设置 `SQLITE_STORAGE_SOURCE=./storage`。
 
 ---
 
-## 一些常见问题
+## 常见问题
 
 ### 基础使用
 
-**Q: 我不会 Docker 怎么办？**  
-A: 装一下 Docker Desktop（Windows/Mac）或者 Docker Engine（Linux），然后复制粘贴上面的命令就行。真的不难。
+**Q: 不会用 Docker？**  
+A: 安装 Docker Desktop（Windows/Mac）或 Docker Engine（Linux），按上文命令执行即可。
 
-**Q: 我的 API Key 会不会泄露？**  
-A: 不会。密钥存在服务器的 `.env` 文件里，不会暴露给前端或用户。
+**Q: API Key 会泄露吗？**  
+A: 不会。密钥仅存在于服务端 `.env`，不向前端或用户暴露。
 
-**Q: 可以用其它的大模型吗？**  
-A: 只要提供 OpenAI 兼容接口，都可以。改一下 `OPENAI_API_BASE_URL` 就行。
+**Q: 是否支持其他大模型？**  
+A: 支持。只要提供 OpenAI 兼容接口，在 `.env` 中配置 `OPENAI_API_BASE_URL` 即可。
 
-**Q: 我改了代码怎么办？**  
-A: 欢迎！提 PR 或者 Issue 都行。
+**Q: 修改了代码如何参与？**  
+A: 欢迎提交 PR 或 Issue。
 
 ### 生成小说时的常见错误
 
@@ -173,16 +164,14 @@ A: 在生成章节内容前，需要先在蓝图（大纲）中创建对应章�
 **Q: 提示"未配置摘要提示词"？**  
 A: 系统缺少必要的 Prompt 配置。管理员需要在后台配置名为 `extraction` 的提示词模板，用于生成章节摘要。
 
-**Q: 提示"AI 返回的内容格式不正确"或 JSON 解析错误？** ⭐ **非常常见**  
-A: 这是最常见的问题之一。AI 返回的内容无法被解析为有效的 JSON 格式。原因和解决方案：
+**Q: 提示"AI 返回的内容格式不正确"或 JSON 解析错误？**（较常见）  
+A: AI 返回内容无法解析为有效 JSON。可能原因与处理方式：
 - **原因 1：模型能力不足** - 某些模型难以稳定输出结构化 JSON
   - 解决：切换到能力更强的模型
   - 或使用支持 structured output 的模型
 - **原因 2：内容过长** - 某些逆向API可能无法支持长输出。
 
-- **临时解决方案：**
-  - 多试几次（有时是偶发问题）
-  - 更换不同的 AI 模型
+- **临时处理：** 重试几次，或更换 AI 模型
 
 **Q: 生成的内容质量不理想怎么办？**  
 A: 可以尝试：
@@ -193,13 +182,13 @@ A: 可以尝试：
 
 ---
 
-## 技术栈（给开发者看的）
+## 技术栈
 
 - **后端：** Python + FastAPI
-- **数据库：** SQLite（默认）或 MySQL+libsql
-- **前端：** Vue +TailwindCSS
+- **数据库：** SQLite（默认）或 MySQL + libsql
+- **前端：** Vue + TailwindCSS
 - **部署：** Docker + Docker Compose
-- **AI 对接：** OpenAI API（或兼容接口）
+- **AI：** OpenAI API 或兼容接口
 
 ---
 
@@ -254,24 +243,18 @@ docker compose -f deploy/docker-compose.yml up -d --build
 
 ## 参与贡献
 
-如果你觉得这个项目有意思，欢迎：
-
-- ⭐ 给个 Star
-- 🐛 提 Bug 或建议（在 Issues 里）
-- 💻 贡献代码（PR 我们都会认真看）
-- 💬 加群聊天（二维码在最上面）
+- Star 项目
+- 在 Issues 中反馈 Bug 或建议
+- 提交 PR 贡献代码
+- 通过文首二维码加入交流群
 
 ---
 
-## 最后说两句
+## 反馈与致谢
 
-如果你用 Arboris 写出了什么有趣的东西，记得告诉我们。  
+使用 Arboris 写出作品后，欢迎与我们分享。祝写作顺利。
 
-祝你写作顺利，故事精彩。
-
-
-
-
+---
 
 ## License
 
