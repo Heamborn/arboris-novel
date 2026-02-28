@@ -74,7 +74,7 @@ RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
 
 # 暴露端口（nginx 80端口）
-EXPOSE 80
+EXPOSE 8080
 
 # 使用 supervisor 启动 nginx 和 uvicorn
 # 注意：容器以 root 启动，supervisor 会根据配置降权运行各个进程
